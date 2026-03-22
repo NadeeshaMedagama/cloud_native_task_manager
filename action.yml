@@ -1,0 +1,189 @@
+# ============================================================================
+# Cloud_Native_Task_Manager — GitHub Marketplace Action
+# ============================================================================
+# Composite action that deploys the Cloud_Native_Task_Manager microservices
+# stack (6 Java services + Next.js frontend + 3 PostgreSQL databases).
+# Can be published to the GitHub Marketplace for reuse.
+# ============================================================================
+
+name: "Cloud_Native_Task_Manager Deploy"
+description: "Deploy the Cloud_Native_Task_Manager microservices platform (6 microservices + Next.js + 3x PostgreSQL) using Docker Compose"
+author: "nadeesha_medagama"
+
+branding:
+  icon: "check-square"
+  color: "blue"
+
+inputs:
+  # ── Database Configuration ──
+  database-username:
+    description: "PostgreSQL username (for all 3 databases)"
+    required: false
+    default: "taskuser"
+  database-password:
+    description: "PostgreSQL password (for all 3 databases)"
+    required: true
+  # ── Authentication ──
+  jwt-secret:
+    description: "JWT signing secret (min 64 hex chars / base64)"
+    required: true
+  jwt-expiration:
+    description: "JWT token expiration in milliseconds"
+    required: false
+    default: "86400000"
+  # ── Admin Account ──
+  admin-username:
+    description: "Default admin username"
+    required: false
+    default: "admin"
+  admin-password:
+    description: "Default admin password"
+    required: false
+    default: "admin123"
+  admin-email:
+    description: "Default admin email"
+    required: false
+    default: "admin@taskmanager.com"
+  # ── API Configuration ──
+  api-url:
+    description: "Public API Gateway URL for the frontend"
+    required: false
+    default: "http://localhost:8080/api"
+  # ── Service Ports ──
+  api-gateway-port:
+    description: "Port to expose the API Gateway on"
+    required: false
+    default: "8080"
+  eureka-port:
+    description: "Port to expose Eureka (Service Discovery) on"
+    required: false
+    default: "8761"
+  frontend-port:
+    description: "Port to expose the frontend on"
+    required: false
+    default: "3000"
+
+outputs:
+  api-gateway-url:
+    description: "URL of the API Gateway (single entry point)"
+    value: ${{ steps.deploy.outputs.api-gateway-url }}
+  frontend-url:
+    description: "URL of the frontend application"
+    value: ${{ steps.deploy.outputs.frontend-url }}
+  eureka-url:
+    description: "URL of the Eureka Service Registry dashboard"
+    value: ${{ steps.deploy.outputs.eureka-url }}
+  swagger-url:
+    description: "URL of the Swagger UI (API documentation)"
+    value: ${{ steps.deploy.outputs.swagger-url }}
+  status:
+    description: "Deployment status message"
+    value: ${{ steps.deploy.outputs.status }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate inputs
+      shell: bash
+      run: |
+        echo "🔍 Validating Cloud_Native_Task_Manager inputs..."
+        if [ -z "${{ inputs.jwt-secret }}" ]; then
+          echo "❌ jwt-secret is required"
+          exit 1
+        fi
+        if [ -z "${{ inputs.database-password }}" ]; then
+          echo "❌ database-password is required"
+          exit 1
+        fi
+        echo "✅ All inputs validated"
+
+    - name: Set up environment for microservices
+      shell: bash
+      run: |
+        echo "⚙️  Configuring microservices environment..."
+        cat > .env <<EOF
+        # ── Database Configuration (3 separate PostgreSQL instances) ──
+        POSTGRES_USER=${{ inputs.database-username }}
+        POSTGRES_PASSWORD=${{ inputs.database-password }}
+        
+        # Auth Service Database
+        AUTH_SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-auth:5432/auth_db
+        AUTH_SPRING_DATASOURCE_USERNAME=${{ inputs.database-username }}
+        AUTH_SPRING_DATASOURCE_PASSWORD=${{ inputs.database-password }}
+        
+        # Task Service Database
+        TASK_SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-task:5433/task_db
+        TASK_SPRING_DATASOURCE_USERNAME=${{ inputs.database-username }}
+        TASK_SPRING_DATASOURCE_PASSWORD=${{ inputs.database-password }}
+        
+        # User Service Database
+        USER_SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5434/user_db
+        USER_SPRING_DATASOURCE_USERNAME=${{ inputs.database-username }}
+        USER_SPRING_DATASOURCE_PASSWORD=${{ inputs.database-password }}
+        
+        # ── JWT Configuration ──
+        JWT_SECRET=${{ inputs.jwt-secret }}
+        JWT_EXPIRATION=${{ inputs.jwt-expiration }}
+        
+        # ── Admin Account ──
+        ADMIN_USERNAME=${{ inputs.admin-username }}
+        ADMIN_PASSWORD=${{ inputs.admin-password }}
+        ADMIN_EMAIL=${{ inputs.admin-email }}
+        
+        # ── Frontend Configuration ──
+        NEXT_PUBLIC_API_URL=${{ inputs.api-url }}
+        EOF
+        echo "✅ Environment file created"
+
+    - name: Deploy with Docker Compose
+      id: deploy
+      shell: bash
+      run: |
+        echo "🚀 Starting Cloud_Native_Task_Manager microservices stack..."
+        docker compose up -d --build
+        
+        echo ""
+        echo "⏳ Waiting for services to become healthy..."
+        sleep 20
+        
+        echo ""
+        echo "📊 Service Status:"
+        docker compose ps
+        
+        # ── Set outputs ──
+        echo "api-gateway-url=http://localhost:${{ inputs.api-gateway-port }}/api" >> $GITHUB_OUTPUT
+        echo "frontend-url=http://localhost:${{ inputs.frontend-port }}" >> $GITHUB_OUTPUT
+        echo "eureka-url=http://localhost:${{ inputs.eureka-port }}" >> $GITHUB_OUTPUT
+        echo "swagger-url=http://localhost:${{ inputs.api-gateway-port }}/api/swagger-ui.html" >> $GITHUB_OUTPUT
+        echo "status=✅ Cloud_Native_Task_Manager is running" >> $GITHUB_OUTPUT
+
+    - name: Verify service health
+      shell: bash
+      run: |
+        echo "🏥 Checking service health endpoints..."
+        
+        # Check API Gateway (port 8080)
+        if curl -sf http://localhost:${{ inputs.api-gateway-port }}/api/actuator/health > /dev/null 2>&1; then
+          echo "✅ API Gateway is healthy"
+        else
+          echo "⚠️  API Gateway not yet responding (expected during startup)"
+        fi
+        
+        # Check Eureka (port 8761)
+        if curl -sf http://localhost:${{ inputs.eureka-port }}/eureka/apps > /dev/null 2>&1; then
+          echo "✅ Eureka Service Discovery is healthy"
+        else
+          echo "⚠️  Eureka not yet responding (expected during startup)"
+        fi
+        
+        echo ""
+        echo "📝 Next steps:"
+        echo "  1. Frontend:     http://localhost:${{ inputs.frontend-port }}"
+        echo "  2. API Gateway:  http://localhost:${{ inputs.api-gateway-port }}/api"
+        echo "  3. Eureka:       http://localhost:${{ inputs.eureka-port }}"
+        echo "  4. Swagger UI:   http://localhost:${{ inputs.api-gateway-port }}/api/swagger-ui.html"
+        echo ""
+        echo "🔑 Default Credentials:"
+        echo "  Username: ${{ inputs.admin-username }}"
+        echo "  Password: [as provided in inputs]"
+
