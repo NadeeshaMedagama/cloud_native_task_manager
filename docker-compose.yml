@@ -1,0 +1,229 @@
+version: '3.9'
+
+services:
+  # ── Service Discovery (Eureka) ─────────────────────────────────────────────
+  service-discovery:
+    build:
+      context: ./service-discovery
+      dockerfile: Dockerfile
+    container_name: taskmanager_eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/eureka > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL Database (Auth) ─────────────────────────────────────────────
+  auth-db:
+    image: postgres:16-alpine
+    container_name: taskmanager_auth_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL Database (Tasks) ────────────────────────────────────────────
+  task-db:
+    image: postgres:16-alpine
+    container_name: taskmanager_task_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: task_db
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+    ports:
+      - "5433:5432"
+    volumes:
+      - task_db_data:/var/lib/postgresql/data
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d task_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL Database (Users) ────────────────────────────────────────────
+  user-db:
+    image: postgres:16-alpine
+    container_name: taskmanager_user_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d user_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Auth Service ───────────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: taskmanager_auth_service
+    restart: unless-stopped
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+      JWT_SECRET: ${JWT_SECRET:-ZGV2LW9ubHktcGxhY2Vob2xkZXIta2V5LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uIQ==}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    ports:
+      - "8081:8081"
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/api/v3/api-docs > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Task Service ────────────────────────────────────────────────────────────
+  task-service:
+    build:
+      context: ./task-service
+      dockerfile: Dockerfile
+    container_name: taskmanager_task_service
+    restart: unless-stopped
+    depends_on:
+      task-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://task-db:5432/task_db
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+      JWT_SECRET: ${JWT_SECRET:-ZGV2LW9ubHktcGxhY2Vib2xkZXIta2V5LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uIQ==}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    ports:
+      - "8082:8082"
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/v3/api-docs > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── User Service ────────────────────────────────────────────────────────────
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: taskmanager_user_service
+    restart: unless-stopped
+    depends_on:
+      user-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-taskuser}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-taskpassword}
+      JWT_SECRET: ${JWT_SECRET:-ZGV2LW9ubHktcGxhY2Vob2xkZXIta2V5LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uIQ==}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    ports:
+      - "8083:8083"
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/api/v3/api-docs > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── API Gateway ─────────────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: taskmanager_api_gateway
+    restart: unless-stopped
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      task-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    ports:
+      - "8080:8080"
+    networks:
+      - task-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/eureka > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Next.js Frontend ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskmanager_frontend
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+    networks:
+      - task-net
+
+# ── Volumes ────────────────────────────────────────────────────────────────────
+volumes:
+  auth_db_data:
+    driver: local
+  task_db_data:
+    driver: local
+  user_db_data:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────────────────────────────
+networks:
+  task-net:
+    driver: bridge
+
