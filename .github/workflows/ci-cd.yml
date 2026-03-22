@@ -138,7 +138,7 @@ jobs:
 
       - name: Extract metadata (${{ matrix.service }})
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKERHUB_ORG }}/cloud-native-task-manager-${{ matrix.service }}
           tags: |
@@ -179,7 +179,7 @@ jobs:
 
       - name: Extract metadata (frontend)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKERHUB_ORG }}/cloud-native-task-manager-frontend
           tags: |
