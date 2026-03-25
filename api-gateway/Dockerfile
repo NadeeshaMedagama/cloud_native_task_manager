@@ -12,8 +12,9 @@ COPY common ./common
 # Copy api-gateway module
 COPY api-gateway ./api-gateway
 
-# Build common and api-gateway
-RUN mvn clean install -DskipTests -pl common,api-gateway -am
+# Build common first, then api-gateway without invoking the root reactor
+RUN mvn -f common/pom.xml clean install -DskipTests \
+    && mvn -f api-gateway/pom.xml clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
