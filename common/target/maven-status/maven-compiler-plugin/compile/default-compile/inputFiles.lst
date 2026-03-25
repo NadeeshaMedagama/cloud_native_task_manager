@@ -1,0 +1,9 @@
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/exception/ResourceNotFoundException.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/dto/UserDTO.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/exception/ErrorResponse.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/exception/UnauthorizedException.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/exception/ConflictException.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/dto/TaskDTO.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/dto/LoginRequestDTO.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/dto/RegisterRequestDTO.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/common/src/main/java/com/taskmanager/common/dto/AuthResponseDTO.java
