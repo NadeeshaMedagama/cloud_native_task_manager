@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: task-management
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - service-discovery.yaml
+  - postgres.yaml
+  - backend.yaml
+  - frontend.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: task-management-platform
+  app.kubernetes.io/version: "2.0.0"
+  app.kubernetes.io/instance: production
+
+commonAnnotations:
+  description: "Microservices-based task management platform"
+  environment: "production"
