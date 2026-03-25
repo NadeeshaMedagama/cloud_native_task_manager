@@ -12,14 +12,9 @@ COPY common ./common
 # Copy service-discovery module
 COPY service-discovery ./service-discovery
 
-# Build common and service-discovery
-RUN mvn clean install -DskipTests -pl common,service-discovery -am
-
-# Copy the rest
-COPY . .
-
-# Build service-discovery JAR
-RUN mvn clean package -DskipTests -pl service-discovery -am
+# Build common first, then service-discovery without invoking the root reactor
+RUN mvn -f common/pom.xml clean install -DskipTests \
+    && mvn -f service-discovery/pom.xml clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
