@@ -1,0 +1,9 @@
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/application/mapper/UserMapper.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/domain/model/User.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/web/controller/UserController.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/infrastructure/filter/JwtAuthenticationFilter.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/web/exception/GlobalExceptionHandler.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/domain/repository/UserRepository.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/UserServiceApplication.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/application/service/UserService.java
+/Users/nadeesha_medagama/IdeaProjects/cloud_native_task_manager/user-service/src/main/java/com/taskmanager/userservice/infrastructure/config/SecurityConfig.java
