@@ -12,8 +12,9 @@ COPY common ./common
 # Copy task-service module
 COPY task-service ./task-service
 
-# Build common first, then task-service without invoking the root reactor
-RUN mvn -f common/pom.xml clean install -DskipTests \
+# Install parent POM, then build common and task-service without invoking the root reactor
+RUN mvn -N -f pom.xml install \
+    && mvn -f common/pom.xml clean install -DskipTests \
     && mvn -f task-service/pom.xml clean package -DskipTests
 
 # Runtime stage
