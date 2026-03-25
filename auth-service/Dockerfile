@@ -12,8 +12,9 @@ COPY common ./common
 # Copy auth-service module
 COPY auth-service ./auth-service
 
-# Build common first, then auth-service without invoking the root reactor
-RUN mvn -f common/pom.xml clean install -DskipTests \
+# Install parent POM, then build common and auth-service without invoking the root reactor
+RUN mvn -N -f pom.xml install \
+    && mvn -f common/pom.xml clean install -DskipTests \
     && mvn -f auth-service/pom.xml clean package -DskipTests
 
 # Runtime stage
