@@ -1,0 +1,9 @@
+com/taskmanager/common/exception/UnauthorizedException.class
+com/taskmanager/common/exception/ResourceNotFoundException.class
+com/taskmanager/common/exception/ConflictException.class
+com/taskmanager/common/dto/TaskDTO.class
+com/taskmanager/common/dto/RegisterRequestDTO.class
+com/taskmanager/common/exception/ErrorResponse.class
+com/taskmanager/common/dto/AuthResponseDTO.class
+com/taskmanager/common/dto/UserDTO.class
+com/taskmanager/common/dto/LoginRequestDTO.class
