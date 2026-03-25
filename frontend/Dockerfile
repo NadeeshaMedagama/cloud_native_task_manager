@@ -1,5 +1,8 @@
+# Use a public mirror of Docker Official Images to avoid Docker Hub pull limits in CI.
+ARG NODE_BASE_IMAGE=public.ecr.aws/docker/library/node:20-alpine
+
 # ---- Build Stage ----
-FROM node:20-alpine AS builder
+FROM ${NODE_BASE_IMAGE} AS builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -10,7 +13,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ---- Runtime Stage ----
-FROM node:20-alpine AS runner
+FROM ${NODE_BASE_IMAGE} AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
