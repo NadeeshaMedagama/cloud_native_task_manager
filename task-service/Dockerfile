@@ -12,8 +12,9 @@ COPY common ./common
 # Copy task-service module
 COPY task-service ./task-service
 
-# Build common and task-service
-RUN mvn clean install -DskipTests -pl common,task-service -am
+# Build common first, then task-service without invoking the root reactor
+RUN mvn -f common/pom.xml clean install -DskipTests \
+    && mvn -f task-service/pom.xml clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
