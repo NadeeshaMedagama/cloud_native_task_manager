@@ -12,8 +12,9 @@ COPY common ./common
 # Copy auth-service module
 COPY auth-service ./auth-service
 
-# Build common and auth-service
-RUN mvn clean install -DskipTests -pl common,auth-service -am
+# Build common first, then auth-service without invoking the root reactor
+RUN mvn -f common/pom.xml clean install -DskipTests \
+    && mvn -f auth-service/pom.xml clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
