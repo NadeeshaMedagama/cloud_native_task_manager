@@ -89,8 +89,8 @@ jobs:
             context: .
             dockerfile: user-service/Dockerfile
           - image: cloud-native-task-manager-frontend
-            context: .
-            dockerfile: frontend/Dockerfile
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
 
     steps:
       - name: Checkout repository
