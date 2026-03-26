@@ -35,15 +35,33 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
+      - name: Determine Maven version
+        id: maven_version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            raw_version="${{ github.event.release.tag_name }}"
+          else
+            raw_version="${{ github.event.inputs.version }}"
+          fi
+
+          # Maven versions should not include a leading "v".
+          version="${raw_version#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set Maven project version
+        run: >-
+          mvn -B -ntp versions:set
+          -DnewVersion=${{ steps.maven_version.outputs.version }}
+          -DgenerateBackupPoms=false
+
       - name: Build common module
-        run: mvn -B -ntp -DskipTests clean package -pl common -am
+        run: mvn -B -ntp -DskipTests clean package -f common/pom.xml
 
       - name: Publish common module to GitHub Packages
         run: >-
           mvn -B -ntp -DskipTests deploy
-          -pl common
-          -am
-          -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
+          -f common/pom.xml
+          -DaltDeploymentRepository=github::https://maven.pkg.github.com/${{ github.repository }}
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
