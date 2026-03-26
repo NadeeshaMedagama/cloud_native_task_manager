@@ -1,6 +1,6 @@
 'use client';
 
-import { TaskFilters, TaskStatus, Priority, SortBy, Direction } from '@/types';
+import { TaskFilters, TaskStatus, Priority, SortBy } from '@/types';
 import { Filter, SortAsc, SortDesc } from 'lucide-react';
 
 interface FilterBarProps {
