@@ -23,7 +23,7 @@
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4.1.16",
+    "@tailwindcss/postcss": "^4.2.4",
     "tailwindcss": "^4.2.2",
     "postcss": "^8",
     "autoprefixer": "^10.5.0",
